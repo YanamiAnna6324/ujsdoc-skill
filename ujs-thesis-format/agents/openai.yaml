@@ -1,0 +1,4 @@
+interface:
+  display_name: "江苏大学论文格式"
+  short_description: "按江苏大学2026毕业设计（论文）规范编辑和检查文档"
+  default_prompt: "Use $ujs-thesis-format to format my thesis document according to the Jiangsu University 2026 graduation design/thesis writing standard."
