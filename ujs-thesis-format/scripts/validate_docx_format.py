@@ -125,6 +125,86 @@ def sequence_warnings(label: str, numbers: list[int]) -> list[Finding]:
     return findings
 
 
+def is_black_font_color(color_el: ET.Element) -> bool:
+    val = color_el.get(w_attr("val"))
+    theme = color_el.get(w_attr("themeColor"))
+    if val is None:
+        return theme is None
+    normalized = val.strip().lstrip("#").upper()
+    return normalized in {"AUTO", "000", "000000"}
+
+
+def describe_font_color(color_el: ET.Element) -> str:
+    val = color_el.get(w_attr("val"))
+    theme = color_el.get(w_attr("themeColor"))
+    parts = []
+    if val:
+        parts.append(f"val={val}")
+    if theme:
+        parts.append(f"themeColor={theme}")
+    return ", ".join(parts) if parts else "unspecified"
+
+
+def collect_used_style_ids(story_roots: list[tuple[str, ET.Element]]) -> set[str]:
+    style_ids: set[str] = set()
+    for _, root in story_roots:
+        for style in root.findall(".//w:pStyle", NS) + root.findall(".//w:rStyle", NS):
+            style_id = style.get(w_attr("val"))
+            if style_id:
+                style_ids.add(style_id)
+        for p in root.findall(".//w:p", NS):
+            if p.find("w:pPr/w:pStyle", NS) is None:
+                style_ids.add("Normal")
+    return style_ids
+
+
+def check_font_colors(zf: zipfile.ZipFile, story_roots: list[tuple[str, ET.Element]]) -> list[Finding]:
+    bad_colors: list[str] = []
+
+    for source, root in story_roots:
+        for color in root.findall(".//w:rPr/w:color", NS):
+            if not is_black_font_color(color):
+                bad_colors.append(f"{source}: {describe_font_color(color)}")
+
+    styles_root = parse_xml(read_zip_text(zf, "word/styles.xml"))
+    if styles_root is not None:
+        used_style_ids = collect_used_style_ids(story_roots)
+        styles_by_id = {
+            style.get(w_attr("styleId")): style
+            for style in styles_root.findall(".//w:style", NS)
+            if style.get(w_attr("styleId"))
+        }
+        pending = list(used_style_ids)
+        seen: set[str] = set()
+        while pending:
+            style_id = pending.pop()
+            if style_id in seen:
+                continue
+            seen.add(style_id)
+            style = styles_by_id.get(style_id)
+            if style is None:
+                continue
+            for color in style.findall("./w:rPr/w:color", NS):
+                if not is_black_font_color(color):
+                    bad_colors.append(f"style {style_id}: {describe_font_color(color)}")
+            based_on = style.find("./w:basedOn", NS)
+            if based_on is not None:
+                base_id = based_on.get(w_attr("val"))
+                if base_id and base_id not in seen:
+                    pending.append(base_id)
+
+    if not bad_colors:
+        return []
+    examples = "; ".join(dict.fromkeys(bad_colors[:8]))
+    return [
+        Finding(
+            "WARN",
+            "font.color",
+            f"Found non-black font color(s): {examples}. Use #000000 unless a special requirement explicitly says otherwise.",
+        )
+    ]
+
+
 def check_content(texts: list[str], image_count: int) -> list[Finding]:
     findings: list[Finding] = []
     joined = "\n".join(texts)
@@ -205,9 +285,17 @@ def validate_docx(path: Path) -> list[Finding]:
             if root is None:
                 return [Finding("ERROR", "docx.document", "Could not read word/document.xml.")]
 
+            story_roots: list[tuple[str, ET.Element]] = []
+            for name in zf.namelist():
+                if re.fullmatch(r"word/(document|header\d+|footer\d+|footnotes|endnotes|comments)\.xml", name):
+                    story_root = parse_xml(read_zip_text(zf, name))
+                    if story_root is not None:
+                        story_roots.append((name, story_root))
+
             findings = check_page_setup(root)
             texts = list(iter_paragraph_text(root))
             findings.extend(check_content(texts, count_images(zf, root)))
+            findings.extend(check_font_colors(zf, story_roots))
             return findings
     except zipfile.BadZipFile:
         return [Finding("ERROR", "file.zip", "File is not a valid DOCX zip package.")]

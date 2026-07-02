@@ -11,6 +11,7 @@ Use this reference for Jiangsu University undergraduate graduation design/thesis
 - Binding: left-side binding.
 - Source-PDF visual style: left-aligned header text with a horizontal rule; centered Arabic page number in footer.
 - Observed fonts in the source PDF: FZXiaoBiaoSong-B05S, FangSong, SimHei, KaiTi, Times New Roman.
+- Font color: default all text to black (`#000000`) unless the user or an official college template explicitly requires another color. This includes headings, body text, captions, tables, references, headers, and footers.
 - Recommended fallback when no official Word template is available:
   - Body Chinese: FangSong or an available FangSong-compatible CJK font.
   - Headings: SimHei or an available Hei-style CJK font.

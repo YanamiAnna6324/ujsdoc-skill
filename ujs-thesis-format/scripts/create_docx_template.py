@@ -14,6 +14,8 @@ from docx.oxml.ns import qn
 from docx.shared import RGBColor
 from docx.shared import Cm, Pt
 
+BLACK = RGBColor(0, 0, 0)
+
 
 def set_run_font(
     run,
@@ -21,7 +23,7 @@ def set_run_font(
     latin: str = "Times New Roman",
     size_pt: float | None = None,
     bold: bool = False,
-    color: RGBColor | None = None,
+    color: RGBColor | None = BLACK,
 ):
     run.font.name = latin
     run._element.rPr.rFonts.set(qn("w:eastAsia"), east_asia)
@@ -38,7 +40,7 @@ def set_style_font(
     latin: str = "Times New Roman",
     size_pt: float | None = None,
     bold: bool = False,
-    color: RGBColor | None = None,
+    color: RGBColor | None = BLACK,
 ):
     style.font.name = latin
     style._element.rPr.rFonts.set(qn("w:eastAsia"), east_asia)
@@ -123,7 +125,7 @@ def configure_styles(doc: Document):
 
     for name, size in [("Heading 1", 16), ("Heading 2", 14), ("Heading 3", 12)]:
         style = doc.styles[name]
-        set_style_font(style, "SimHei", size_pt=size, bold=True, color=RGBColor(0, 0, 0))
+        set_style_font(style, "SimHei", size_pt=size, bold=True)
         style.paragraph_format.first_line_indent = Pt(0)
         style.paragraph_format.space_before = Pt(12)
         style.paragraph_format.space_after = Pt(6)
@@ -135,7 +137,7 @@ def add_starter_content(doc: Document):
     p.paragraph_format.first_line_indent = Pt(0)
     p.paragraph_format.space_after = Pt(24)
     run = p.add_run("毕业设计（论文）题目")
-    set_run_font(run, "FZXiaoBiaoSong-B05S", size_pt=22, bold=True, color=RGBColor(0, 0, 0))
+    set_run_font(run, "FZXiaoBiaoSong-B05S", size_pt=22, bold=True)
 
     fields = [
         "学院：",

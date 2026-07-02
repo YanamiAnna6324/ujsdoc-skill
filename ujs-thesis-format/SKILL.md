@@ -19,6 +19,7 @@ description: Format, edit, create, and verify Jiangsu University undergraduate g
 - Use A4 pages with top/left margins of 25 mm and bottom/right margins of 20 mm.
 - Keep left-side binding in mind; do not move page content into the binding area.
 - Use Chinese thesis typography: FangSong-style body text, SimHei-style headings, Times New Roman for Latin text and numbers where appropriate. The source PDF also uses FZXiaoBiaoSong, KaiTi, FangSong, SimHei, and Times New Roman.
+- Unless the user or an official college template explicitly requires another color, set all font colors to black (`#000000`), including body text, headings, captions, tables, references, headers, and footers.
 - Keep a left-aligned header with a horizontal rule and centered Arabic page numbers in the footer when matching the source PDF style.
 - Use first-line indentation for Chinese paragraphs, consistent line spacing, and no overlapping or clipped text.
 - Number figures as `图 1`, `图 2`, ... with titles below figures.
